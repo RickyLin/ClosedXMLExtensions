@@ -9,9 +9,9 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
 
-namespace ClosedXMLExtension
+namespace ClosedXMLExtensions
 {
-    public static class ClosedXMLExtensions
+    public static class IXLWorksheetExtensions
     {
         public static void SetCellValue(this IXLWorksheet worksheet, int rowIndex, int columnIndex, object value)
         {
