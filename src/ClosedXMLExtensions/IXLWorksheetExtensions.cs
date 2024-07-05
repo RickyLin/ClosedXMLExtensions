@@ -86,16 +86,18 @@ namespace ClosedXMLExtensions
         /// <typeparam name="T">The data type of data source</typeparam>
         /// <param name="worksheet">The worksheet that will be populated</param>
         /// <param name="dataSource">The data source</param>
-        /// <param name="templateFieldRowIndex">The row index where property names reside</param>
-        /// <param name="newRowAdding">Invoke before adding a new row in worksheet, Func parameters: the worksheet; the row index of the row that is going to add;
-        /// the data item; the new row index, should be the same row index if no row is added in Func body.
+        /// <param name="templateFieldRowIndex">The row index where property names reside, 1-based</param>
+        /// <param name="newRowAdding">Invoke before adding a new row in worksheet. Func parameters: the worksheet; the row index (1-based) of the row that is going to add;
+        /// the data item; the updated row index (1-based), should be the same row index if no row is added in Func body.
         /// </param>
-        /// <param name="newRowAdded">Invoke after a new row is added in worksheet</param>
-        /// <param name="populateDone"></param>
+        /// <param name="newRowAdded">Invoke after a new row is added in worksheet. Func parameters: the worksheet; the row index (1-based) of the current added row;
+        /// the data item; the updated row index (1-based), should be the same row index if no row is added in Func body.</param>
+        /// <param name="allDataPopulated">Invoke after all data is populated. Func parameters: the worksheet; the last row index (1-based) that data is populated to worksheet;
+        /// the data set; the updated last row index (1-based), should be the same last row index if no row is added in Func body</param>
         /// <returns>The last row index that is filled in.</returns>
         public static int Populate<T>(this IXLWorksheet worksheet, IEnumerable<T> dataSource, int templateFieldRowIndex = 2
             , Func<IXLWorksheet, int, T, int> newRowAdding = null, Func<IXLWorksheet, int, T, int> newRowAdded = null
-            , Action<IXLWorksheet, int, IEnumerable<T>> allDataPopulated = null)
+            , Func<IXLWorksheet, int, IEnumerable<T>, int> allDataPopulated = null)
         {
             Type dataSourceType = typeof(T);
             IEnumerable<PropertyInfo> properties = dataSourceType.GetProperties().Where(p => p.CanRead);
@@ -173,7 +175,9 @@ namespace ClosedXMLExtensions
                     rowIndex = newRowAdded.Invoke(worksheet, rowIndex, data);
             }
 
-            allDataPopulated?.Invoke(worksheet, rowIndex, dataSource);
+            if (allDataPopulated != null)
+                rowIndex = allDataPopulated.Invoke(worksheet, rowIndex, dataSource);
+
             return rowIndex;
         }
 
@@ -182,16 +186,18 @@ namespace ClosedXMLExtensions
         /// </summary>
         /// <param name="worksheet">The worksheet that will be populated</param>
         /// <param name="dataView">The data view</param>
-        /// <param name="templateFieldRowIndex">The row index where property names reside</param>
-        /// <param name="newRowAdding">Invoke before adding a new row in worksheet, Func parameters: the worksheet; the row index of the row that is going to add;
-        /// the data item; the new row index, should be the same row index if no row is added in Func body.
+        /// <param name="templateFieldRowIndex">The row index where property names reside, 1-based</param>
+        /// <param name="newRowAdding">Invoke before adding a new row in worksheet. Func parameters: the worksheet; the row index (1-based) of the row that is going to add;
+        /// the data item; the updated row index (1-based), should be the same row index if no row is added in Func body.
         /// </param>
-        /// <param name="newRowAdded">Invoke after a new row is added in worksheet</param>
-        /// <param name="populateDone"></param>
+        /// <param name="newRowAdded">Invoke after a new row is added in worksheet. Func parameters: the worksheet; the row index (1-based) of the current added row;
+        /// the data item; the updated row index (1-based), should be the same row index if no row is added in Func body.</param>
+        /// <param name="allDataPopulated">Invoke after all data is populated. Func parameters: the worksheet; the last row index (1-based) that data is populated to worksheet;
+        /// the data set; the updated last row index (1-based), should be the same last row index if no row is added in Func body</param>
         /// <returns>The last row index that is filled in.</returns>
         public static int Populate(this IXLWorksheet worksheet, DataView dataView, int templateFieldRowIndex = 2
             , Func<IXLWorksheet, int, DataRowView, int> newRowAdding = null, Func<IXLWorksheet, int, DataRowView, int> newRowAdded = null
-            , Action<IXLWorksheet, int, DataView> allDataPopulated = null)
+            , Func<IXLWorksheet, int, DataView, int> allDataPopulated = null)
         {
             var dataSourceColumnMapping = new Dictionary<int, DataColumn>(dataView.Table.Columns.Count);
             var plainMapping = new Dictionary<int, string>();
@@ -273,7 +279,8 @@ namespace ClosedXMLExtensions
                     sheetRowIndex = newRowAdded.Invoke(worksheet, sheetRowIndex, data);
             }
 
-            allDataPopulated?.Invoke(worksheet, sheetRowIndex, dataView);
+            if (allDataPopulated != null)
+                sheetRowIndex = allDataPopulated.Invoke(worksheet, sheetRowIndex, dataView);
 
             return sheetRowIndex;
         }
